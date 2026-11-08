@@ -9222,7 +9222,7 @@ DFL.tracker=wb=>{_dflT27(wb);const E={};if(wb.Employees)E.Employees=wb.Employees
 /* Employee_Details.xlsx no longer separate (old file read once if Tracker has no Employees sheet) */
 {const i=DF_ORDER.indexOf("emps");if(i>=0)DF_ORDER.splice(i,1)}
 dfLoadAll=(function(prev){return async function(){const r=await prev.apply(this,arguments);try{if(DF.dir){const fh=await dfFile(DFF.tracker,false);if(fh){const wb=await xlsxRead(await (await fh.getFile()).arrayBuffer());
-  if(!wb.Employees){const ef=await dfFile(DFF.emps,false);if(ef){_dflE27(await xlsxRead(await (await ef.getFile()).arrayBuffer()));DF.lastJ.tracker="";await dfWriteOne("tracker",true);toast("👥 "+LG("Employees moved into Tracker_Projects.xlsx","Employees ab Tracker_Projects.xlsx mein"))}}}}}catch(e){}render();return r}})(dfLoadAll);
+  if(false){const ef=await dfFile(DFF.emps,false);if(ef){_dflE27(await xlsxRead(await (await ef.getFile()).arrayBuffer()));DF.lastJ.tracker="";await dfWriteOne("tracker",true);toast("👥 "+LG("Employees moved into Tracker_Projects.xlsx","Employees ab Tracker_Projects.xlsx mein"))}}}}}catch(e){}render();return r}})(dfLoadAll);
 
 /* ---------- links: any link (link 2, project links) can open as a tab ---------- */
 LK.tmp=LK.tmp||{};
@@ -9261,7 +9261,7 @@ dfLoadAll=(function(prev){return async function(){DF.loaded=false;let has=false;
   const r=await prev.apply(this,arguments);DF.loaded=true;DF.lastJ={};
   /* fill only what is missing in the folder (never replace existing data) */
   try{for(const k of DF_ORDER){const fh=await dfFile(DFF[k],false);if(!fh){await dfWriteOne(k,true)}else{DF.lastJ[k]=DFK[k]()}}
-    const fh=await dfFile(DFF.tracker,false);if(fh){const wb=await xlsxRead(await (await fh.getFile()).arrayBuffer());if(!wb.Employees){await dfWriteOne("tracker",true);toast("👥 "+LG("Employee sheets added to Tracker_Projects.xlsx","Employee sheets Tracker_Projects.xlsx mein jod di"))}}}catch(e){}
+    const fh=await dfFile(DFF.tracker,false);if(fh){const wb=await xlsxRead(await (await fh.getFile()).arrayBuffer());if(!(trSheetOf(wb)&&empSheetOf(wb)&&locSheetOf(wb))){await dfWriteOne("tracker",true);toast("📗 Tracker_Projects.xlsx → "+LG("3 sheets: Tracker + Employee + Location","3 sheets: Tracker + Employee + Location"))}}}catch(e){}
   try{xlLight()}catch(e){}return r}})(dfLoadAll);
 /* linking a folder that already has data → only read (v25 did load+write) */
 dfLink=(function(prev){return async function(){DF.loaded=false;return prev.apply(this,arguments)}})(dfLink);
@@ -9269,6 +9269,94 @@ dfWriteAll=(function(prev){return async function(force){if(!DF.loaded&&!(force&&
 /* header light shows "reading Excel…" until the first load */
 xlLight=(function(prev){return function(){prev();const b=$("xl23");if(b&&DF.dir&&DF.ok&&!DF.loaded){b.className="xl23 busy";b.innerHTML=`<i></i><span>📁 ${esc(DF.dir.name)} • ${LG("reading Excel…","Excel padh raha…")}</span>`;b.dataset.s=""}}})(xlLight);
 function v28Boot(){}
+
+/* ================================================================
+   v29 — Tracker_Projects.xlsx = exactly 2 sheets: "Tracker" + "Employee"
+   • Tracker uses YOUR headings (order + names + cell values kept)
+   • Employee sheet is filled by you; HTML only reads it
+   • Process Details removed • Presentations: location icons
+================================================================ */
+const TRH=["Yrs","Idea ID","Version","HOD","Location","Category","Actual Start Date","Actual Deployed Date","Time to Develop","Process Name","Annual (210 Days) Saved Hrs per Claims","Manual Efforts","After Implementation","Saved Minutes as per Target","Total Users","Annual Minutes Saved as per Target","Status","Success","Big Bet","Project Status","Idea Generated","HUB/EXCEL - Created","GitHub Link","Vercel Link","EMP ID","OPID","MSID","Machine Name","User Name and Access","User Mail ID","Problem Statement","Description","Info to Mail","Backup Mail"];
+const EMH0=["EMP ID","Name","Location","Process","MSID","OPID","Machine Name","Outlook Mail","Role","Skills"];
+const TRMAP=[[/^(yrs?|year)$/,"year"],[/^idea ?id$/,"toolId"],[/^version$/,"ver"],[/^location$/,"loc"],[/^category$/,"category"],[/^(project|project name|tool|tool name)$/,"name"],
+ [/^(actual start date|development start|start( date)?)$/,"start"],[/^(actual deplo?ye?d date|actualdeplyed date|deplo?y(ed)? date|end( date)?|go.?live date)$/,"end"],[/^time to develop/,"dev"],[/^process( name)?$/,"process"],
+ [/^(manual efforts?|existing.*)$/,"exist"],[/^after implement/,"after"],[/^saved minutes as per target/,"saveClaim"],[/^total users?$/,"users"],[/^status$/,"status"],[/^big bet$/,"prio"],
+ [/^git ?hub( link)?$/,"github"],[/^vercel( link)?$/,"vercel"],[/^problem statement$/,"problem"],[/^description$/,"desc"],[/^(domestic )?leader$|^owner$/,"leader"],[/^lob$/,"lob"],[/^impact$/,"impact"]];
+const hn=h=>String(h??"").trim().toLowerCase().replace(/\s+/g," ");
+const slug=h=>"cf_"+hn(h).replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"").slice(0,30);
+function trKey(h){const n=hn(h);for(const[r,k]of TRMAP)if(r.test(n))return k;return slug(h)}
+function trSheetOf(wb){const k=Object.keys(wb).find(k=>/^tracker( details)?$/i.test(k.trim()));return k?wb[k]:null}
+function empSheetOf(wb){const k=Object.keys(wb).find(k=>/^employees?( details)?$/i.test(k.trim()));return k?wb[k]:null}
+const TRNUM2=new Set(["users","dev"]);
+const sameV=(k,raw,v)=>{if(raw===undefined)return false;if(k=="start"||k=="end")return(xlDate(raw)||"")==(v||"");if(TRNUM2.has(k))return N(raw)==N(v)&&String(v)!=="";return String(raw??"")==String(v??"")};
+function savedCalc(){const ak=(S.fields||[]).find(f=>/annual\s*min/i.test(f.label)),hk=(S.fields||[]).find(f=>/annual.*(hrs|hours)/i.test(f.label));
+  S.tools.forEach(t=>{const m=ak?N(t[ak.key]):0,h=hk?N(t[hk.key]):0;if(m>0)t.savedHrs=Math.round(m/60*10)/10;else if(h>0)t.savedHrs=h;else if(ak||hk)t.savedHrs=0})}
+annualApply=savedCalc;
+/* ---------- READ ---------- */
+let EMPRAW=null,EMPFP="";
+function trLoad(rows){const H=(rows[0]||[]).map(h=>String(h??"").trim());while(H.length&&!H[H.length-1])H.pop();if(!H.length)return;S.settings.trHdr=H;
+  const keys=H.map(trKey),old=S.tools.slice(),used=new Set();let maxU=Math.max(0,...old.map(t=>t.uid));
+  S.fields=H.map((h,i)=>[h,keys[i]]).filter(([h,k])=>h&&k.startsWith("cf_")).map(([h,k])=>({key:k,label:h}));
+  keys.forEach((k,i)=>{if(!k.startsWith("cf_")&&H[i])S.settings.colLbl=Object.assign({},S.settings.colLbl,{[k]:H[i]})});
+  const out=[];rows.slice(1).forEach(r=>{if(!r||!r.some(v=>v!==""&&v!=null))return;const t={_x:{}};H.forEach((h,i)=>{if(!h)return;const k=keys[i];let v=r[i];t._x[h]=v===undefined?"":v;
+      if(k=="start"||k=="end")v=xlDate(v);else if(TRNUM2.has(k))v=v===""||v==null?"":N(v);else v=v==null?"":String(v).trim();t[k]=v});
+    if(!t.name)t.name=t.category||t.process||"Project";t.loc=String(t.loc||"").trim().toUpperCase();
+    const id=[t.toolId,t.ver,t.name].join("|").toLowerCase(),o=old.find(x=>!used.has(x.uid)&&[x.toolId,x.ver,x.name].join("|").toLowerCase()==id)||old.find(x=>!used.has(x.uid)&&x.name==t.name&&x.loc==t.loc);
+    const base=o?Object.assign({},o):{uid:++maxU,prio:"MED"};if(o)used.add(o.uid);keys.forEach(k=>{delete base[k]});out.push(Object.assign(base,t,{uid:base.uid}))});
+  S.tools=out;
+  out.forEach(t=>{const lx=S.locs.find(l=>l.code==t.loc);if(lx&&!lx.active&&!window.LOCSHEET)lx.active=true;if(t.loc&&!S.locs.some(l=>l.code==t.loc))S.locs.push({code:t.loc,name:t.loc,color:["#2b7bff","#d63c8c","#f2a23a","#1fc8a8","#7a5cff","#ff6b3d"][S.locs.length%6],active:true});
+    if(t.status&&!S.statuses.some(s=>s.name==t.status))S.statuses.push({name:t.status,color:"#7a8aa8",show:true})});
+  savedCalc()}
+function empLoad(rows){EMPRAW=rows&&rows.length?rows.map(r=>(r||[]).slice()):[EMH0.slice()];if(!rows||rows.length<1){S.emps=[];EMPFP=DFK.emps();return}
+  const o={Employees:rows};try{_dflE27(o)}catch(e){}if(rows.length<2)S.emps=[];EMPFP=DFK.emps()}
+DFL.tracker=(function(prev){return function(wb){const T=trSheetOf(wb),E=empSheetOf(wb);
+  const LS=locSheetOf(wb);window.LOCSHEET=!!LS;if(LS)locLoad(LS);
+  if(T){NOFEED=true;try{trLoad(T)}finally{NOFEED=false}}else{prev(wb);if(!S.settings.trHdr)S.settings.trHdr=TRH.slice()}
+  if(E)empLoad(E);else{S.emps=[];EMPRAW=[EMH0.slice()];EMPFP=DFK.emps()}}})(DFL.tracker);
+/* ---------- WRITE ---------- */
+function trRows(){const H=S.settings.trHdr&&S.settings.trHdr.length?S.settings.trHdr:TRH,fmt=S.settings.xlDateFmt||"mm-dd-yyyy",keys=H.map(trKey);
+  return[H.slice()].concat(S.tools.map(t=>H.map((h,i)=>{const k=keys[i];let v=t[k];
+    if((v==null||v==="")&&k.startsWith("cf_")){const f=(S.fields||[]).find(f=>hn(f.label).replace(/[^a-z0-9]/g,"")==hn(h).replace(/[^a-z0-9]/g,""));if(f)v=t[f.key]}
+    const raw=(t._x||{})[h];if(sameV(k,raw,v))return raw;
+    if((k=="start"||k=="end")&&/^\d{4}-\d{2}-\d{2}$/.test(v||""))return xlFmtDate(isoSerial(v),fmt);
+    if(v===""||v==null)return"";if(typeof v=="number")return v;const s=String(v);return/^-?\d+(\.\d+)?$/.test(s)&&s.length<15?+s:s})))}
+function empRows(){if(EMPRAW&&DFK.emps()==EMPFP)return EMPRAW;const H=(EMPRAW&&EMPRAW[0]&&EMPRAW[0].some(Boolean))?EMPRAW[0]:EMH0,F=empF();
+  const keyOf=h=>{const n=hn(h);if(n=="id")return"id";const f=F.find(f=>f[1].toLowerCase()==n||f[0].toLowerCase()==n);if(f)return f[0];return"c_"+n.replace(/[^a-z0-9]+/g,"_").slice(0,24)};
+  return[H.slice()].concat(S.emps.map(e=>H.map(h=>{const k=keyOf(h);return k=="id"?e.id:eVal(e,k)})))}
+function locRows(){return[["Location Code","Location Name","Color","Active (YES/NO)"]].concat(S.locs.map(l=>[l.code,l.name,l.color,l.active?"YES":"NO"]))}
+function locSheetOf(wb){const k=Object.keys(wb).find(k=>/^locations?$/i.test(k.trim()));return k?wb[k]:null}
+function locLoad(rows){const L=rows.slice(1).filter(r=>r&&r[0]).map((r,i)=>({code:String(r[0]).trim().toUpperCase(),name:String(r[1]||r[0]).trim(),color:/^#[0-9a-f]{6}$/i.test(String(r[2]||"").trim())?String(r[2]).trim():["#2b7bff","#d63c8c","#f2a23a","#1fc8a8","#7a5cff","#ff6b3d"][i%6],active:!/^(n|no|0|false)$/i.test(String(r[3]??"YES").trim())}));if(L.length)S.locs=L}
+DFB.tracker=()=>{const T=trRows(),E=empRows(),L=locRows();return pureBuild([{name:"Tracker",rows:T,w:T[0].map(h=>/project|category|description|problem|mail|access/i.test(h)?36:16)},{name:"Employee",rows:E,w:E[0].map(()=>18)},{name:"Location",rows:L,w:[16,24,12,16]}])};
+DFK.tracker=()=>JSON.stringify([S.locs,S.tools,S.settings.trHdr,S.emps.length,DFK.emps()]);
+/* locations / statuses live in Settings.xlsx now */
+DFB.settings=(function(prev){return function(){S.settings.locs22=S.locs;S.settings.st22=S.statuses;return prev()}})(DFB.settings);
+DFL.settings=(function(prev){return function(wb){prev(wb);if(Array.isArray(S.settings.locs22)&&S.settings.locs22.length)S.locs=S.settings.locs22;if(Array.isArray(S.settings.st22)&&S.settings.st22.length)S.statuses=S.settings.st22}})(DFL.settings);
+persist=(function(prev){return function(){try{savedCalc()}catch(e){}return prev.apply(this,arguments)}})(persist);
+
+/* ---------- Tracker grid = your headings ---------- */
+tr3Grid=function(L){const H=S.settings.trHdr||TRH,ed=EDIT?"contenteditable":"";
+  return`<div class="gr3"><table><thead><tr><th class="sx">#</th>${H.map((h,i)=>`<th><span ${ed} onblur="trRen(${i},this.innerText)">${esc(h)}</span>${EDIT?"<em>✎</em>":""}</th>`).join("")}</tr></thead>
+   <tbody>${L.map(t=>`<tr data-u="${t.uid}"><td class="sx">${EDIT?`<button class="lcb" title="Delete" onclick="ensureEdit(()=>delTool(${t.uid}))">🗑</button>`:t.uid}</td>${H.map(h=>{const k=trKey(h);let v=TR3.chg[t.uid]&&k in TR3.chg[t.uid]?TR3.chg[t.uid][k]:t[k];
+     if((k=="start"||k=="end")&&/^\d{4}-\d{2}-\d{2}$/.test(v||""))v=xlFmtDate(isoSerial(v),S.settings.xlDateFmt||"mm-dd-yyyy");v=v??"";
+     return k=="loc"?`<td ${ed} oninput="tr3Set(${t.uid},'loc',this)"><span class="loc3" style="background:${lc(t.loc)}">${esc(t.loc||"—")}</span></td>`:`<td ${ed} class="${isMiss(v)?"mi":""}" oninput="tr3Set(${t.uid},'${k}',this)">${esc(v)}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>`};
+function trRen(i,txt){txt=String(txt||"").trim();const H=S.settings.trHdr||(S.settings.trHdr=TRH.slice());if(!txt||H[i]==txt)return;const ok=trKey(H[i]),f=(S.fields||[]).find(f=>f.key==ok);
+  H[i]=txt;const nk=trKey(txt);if(f&&nk.startsWith("cf_")){S.tools.forEach(t=>{if(t[ok]!=null){t[nk]=t[ok];if(nk!=ok)delete t[ok]}});f.key=nk;f.label=txt}persist(false);toast("✏️ "+LG("Heading changed → Excel","Heading badli → Excel"))}
+tr3Save=(function(prev){return function(){Object.values(TR3.chg).forEach(o=>{["start","end"].forEach(k=>{if(k in o)o[k]=xlDate(o[k])});if("loc" in o)o.loc=String(o.loc).trim().toUpperCase()});return prev()}})(tr3Save);
+tr3AddCol=async function(){ensureEdit(async()=>{const v=await ask("➕ "+LG("NEW COLUMN","NAYA COLUMN"),LG("Column name (goes to Excel too)","Column ka naam (Excel mein bhi jayega)"),[{ph:LG("Column name","Column ka naam"),type:"text"}]);if(!v||!v[0].trim())return;const lab=v[0].trim(),H=S.settings.trHdr||(S.settings.trHdr=TRH.slice());
+  if(H.some(h=>hn(h)==hn(lab))){toast("⚠ "+LG("Already exists","Pehle se hai"));return}H.push(lab);const k=trKey(lab);if(k.startsWith("cf_")&&!(S.fields||[]).some(f=>f.key==k))S.fields.push({key:k,label:lab});TR3.v="grid";persist();toast("➕ "+lab+" → Excel")})};
+
+/* ---------- Process Details removed ---------- */
+{const i=SCR22.findIndex(x=>x[0]=="cat");if(i>=0)SCR22.splice(i,1)}
+render=(function(prev){return function(){if(S&&cur&&cur.s=="cat"){cur={s:"hof",arg:""};history.replaceState(null,"","#/hof")}return prev()}})(render);
+rHome=(function(prev){return function(){prev();document.querySelectorAll("#sc-home .lact .b22").forEach(b=>{if(/Process Details/.test(b.textContent))b.remove()})}})(rHome);
+
+/* ---------- Presentations: location icons ---------- */
+let PPL="ALL";
+rRep=(function(prev){return function(){prev();const L=act().sort((a,b)=>b.uid-a.uid),h=document.querySelector("#sc-rep .pp3h");if(!h)return;
+  const locs=["ALL"].concat([...new Set(L.map(t=>t.loc).filter(Boolean))]);
+  h.insertAdjacentHTML("beforeend",`<div class="pd3f pploc">${locs.map(c=>`<button class="ech ${PPL==c?"on":""}" style="--c:${c=="ALL"?"#2b7bff":lc(c)}" onclick="PPL='${c}';rRep()">${c=="ALL"?"🌐 "+LG("All","Sab"):"📍 "+esc(c)} <b>${c=="ALL"?L.length:L.filter(t=>t.loc==c).length}</b></button>`).join("")}</div>`);
+  document.querySelectorAll("#sc-rep .ppl3 .ppi").forEach((el,i)=>{const t=L[i];if(t&&PPL!="ALL"&&t.loc!=PPL)el.style.display="none"})}})(rRep);
+function v29Boot(){if(!S.settings.trHdr)S.settings.trHdr=TRH.slice();buildNav();if(cur&&cur.s=="cat")render()}
 
 /* ---------------- BOOT ---------------- */
 document.addEventListener("DOMContentLoaded",async()=>{
@@ -9284,7 +9372,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   try{fileH=await idb("readonly",st=>st.get("file"))||null}catch(e){fileH=null}
   if(fileH){try{fileNeed=(await fileH.queryPermission({mode:"readwrite"}))!=="granted"}catch(e){fileNeed=true}}
   try{if(sessionStorage.getItem("nge_edit")&&S.settings.pin){EDIT=true;document.body.classList.add("edit");$("editBtn").textContent="✏️ EDIT MODE : ON";$("editBtn").className="pill gold"}}catch(e){}
-  saveStateUI();addEventListener("hashchange",route);v6Top();route();jInit();xpUI();LVREADY=true;pcGate();boot();wake();lokAuto();xlCheck();v8Boot();dfBoot();v22Boot();v23Boot();v24Boot();v25Boot();v26Boot();v27Boot();v28Boot();
+  saveStateUI();addEventListener("hashchange",route);v6Top();route();jInit();xpUI();LVREADY=true;pcGate();boot();wake();lokAuto();xlCheck();v8Boot();dfBoot();v22Boot();v23Boot();v24Boot();v25Boot();v26Boot();v27Boot();v28Boot();v29Boot();
   
 });
 </script>
