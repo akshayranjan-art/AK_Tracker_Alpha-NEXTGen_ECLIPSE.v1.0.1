@@ -2137,6 +2137,11 @@ body.t22 #emodal .lnk{color:#7fe9ff!important}
 body.t22 #emodal .hfdg b{font-weight:700!important;color:#ffffff!important;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 body.t22 #emodal .hfdx p{color:#f2f7ff!important;font-weight:500}
 
+#lkStrip{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:6px 10px;background:color-mix(in srgb,var(--side) 92%,transparent);border-bottom:1px solid var(--line);font:600 11.5px "Segoe UI";color:var(--txt);backdrop-filter:blur(6px)}
+#lkStrip span:first-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lkV .lkfr{top:44px!important;height:calc(100% - 44px)!important}
+.lkc[data-app] .lkt b::after{content:" 🪟";font-size:11px}
+
 </style>
 </head>
 <body>
@@ -9358,6 +9363,37 @@ rRep=(function(prev){return function(){prev();const L=act().sort((a,b)=>b.uid-a.
   document.querySelectorAll("#sc-rep .ppl3 .ppi").forEach((el,i)=>{const t=L[i];if(t&&PPL!="ALL"&&t.loc!=PPL)el.style.display="none"})}})(rRep);
 function v29Boot(){if(!S.settings.trHdr)S.settings.trHdr=TRH.slice();buildNav();if(cur&&cur.s=="cat")render()}
 
+/* ================================================================
+   v30 — My Links: "App window" mode for apps that connect a folder
+   (browsers never let a page inside another page open the folder picker)
+================================================================ */
+LK.win=LK.win||{};
+function lkWin(id){const l=lkGet(id);if(!l)return;const w=LK.win[id];if(w&&!w.closed){try{w.focus()}catch(e){}return}
+  const W=Math.min(screen.availWidth-40,1500),H=Math.min(screen.availHeight-60,950);
+  LK.win[id]=window.open(lkUrl(l.url),"lkw_"+String(id).replace(/\W/g,"_"),`popup=yes,width=${W},height=${H},left=${Math.round((screen.availWidth-W)/2)},top=20`);
+  if(!LK.win[id])toast("⚠ "+LG("Allow pop-ups for this page (icon at the right of the address bar)","Is page ke pop-ups allow karo (address bar ke right icon se)"));lkRefresh&&lkRefresh()}
+lkOpen=(function(prev){return function(id){const l=lkGet(id);if(l&&l.app){lkWin(id);return}return prev(id)}})(lkOpen);
+/* tab view: strip on top of every page with the app-window button */
+lkFrame=(function(prev){return function(id){prev(id);const f=document.querySelector(`#lkV .lkfr[data-id="${id}"]`);if(!f||f.dataset.v30)return;f.dataset.v30=1}})(lkFrame);
+lkRefresh=(function(prev){return function(){prev();const v=$("lkV");if(!v)return;let s=$("lkStrip");if(!LK.act||!lkGet(LK.act)){if(s)s.remove();return}
+  if(!s){v.insertAdjacentHTML("afterbegin",`<div id="lkStrip"></div>`);s=$("lkStrip")}
+  s.innerHTML=`<span>📁 ${LG("This app needs to connect a folder or log in? Pages opened inside here are blocked by the browser.","Ye app folder connect / login maangta hai? Andar khule page ko browser rok deta hai.")}</span><button class="pill b22 sm acc" onclick="lkWin(LK.act)"><i>🪟</i><span>${LG("Open as app window","App window mein kholo")}</span></button>${String(LK.act).match(/~2$|^t/)?"":`<button class="pill b22 sm" onclick="lkSetApp(LK.act,true)"><i>📌</i><span>${LG("Always app window","Hamesha app window")}</span></button>`}<button class="lcb" title="Hide" onclick="this.parentNode.remove()">✕</button>`}})(lkRefresh);
+function lkSetApp(id,on){const l=(S.links2||[]).find(x=>x.id==id);if(!l)return;l.app=!!on;persist(false);toast(on?"🪟 "+LG("Will always open as an app window","Ab hamesha app window mein khulega"):"▶ "+LG("Opens inside as a tab","Andar tab mein khulega"));if(on){lkClose(id);lkWin(id)}else lkRefresh()}
+/* menu + edit form options */
+lkMenu=(function(prev){return function(ev,id){prev(ev,id);const m=$("lkM"),l=(S.links2||[]).find(x=>x.id==id);if(!m||!l)return;const first=m.querySelector("button");
+  first.insertAdjacentHTML("beforebegin",`<button onclick="$('lkM').remove();lkWin('${id}')"><i>🪟</i>${LG("Open as app window (folder / login works)","App window mein (folder / login chalega)")}</button>`);
+  m.insertAdjacentHTML("beforeend",`<button onclick="$('lkM').remove();lkSetApp('${id}',${!l.app})"><i>${l.app?"▶":"📌"}</i>${l.app?LG("Open inside as tab (default)","Andar tab mein kholo (default)"):LG("Always open as app window","Hamesha app window")}</button>`)}})(lkMenu);
+lkEdit=(function(prev){return function(id){prev(id);setTimeout(()=>{const g=$("lkG");if(!g||$("lkA"))return;const l=(S.links2||[]).find(x=>x.id==id)||{};
+  g.closest("label").insertAdjacentHTML("afterend",`<label class="chk" style="grid-column:1/-1"><input type="checkbox" id="lkA" ${l.app?"checked":""}> 🪟 ${LG("Open as app window (needed for apps that connect a data folder or need login)","App window mein kholo (jo app data folder connect karte hain ya login maangte hain unke liye zaroori)")}</label>`)},120)}})(lkEdit);
+lkSave=(function(prev){return function(id){const a=$("lkA");const on=a?a.checked:null;prev(id);const l=(S.links2||[]).find(x=>x.id==(id||LK.sel));if(l&&on!=null){l.app=on;persist(false)}}})(lkSave);
+lkListHTML=(function(prev){return function(){let h=prev();(S.links2||[]).forEach(l=>{if(l.app)h=h.replace(`lkMenu(event,'${l.id}')"`,`lkMenu(event,'${l.id}')" data-app="1"`)});return h}})(lkListHTML);
+/* keep the "app" flag in Personal_Links.xlsx */
+DFB.links=(function(prev){return function(){const o=prev();return o}})(DFB.links);
+{const _b=DFB.links;DFB.links=()=>pureBuild([{name:"Links",rows:[["Name","URL / Path","Category","User ID","Password","Icon","Notes","ID","GitHub / Link 2","App window (YES/NO)"]].concat((S.links2||[]).map(l=>[l.name,l.url,l.cat,l.user,l.pw,l.ic,l.note,l.id,l.url2||"",l.app?"YES":"NO"])),w:[28,70,14,22,22,8,40,14,60,18]}])}
+DFL.links=(function(prev){return function(wb){prev(wb);const L=wb.Links;if(!L)return;L.slice(1).filter(r=>r&&r[1]).forEach((r,i)=>{if(S.links2[i])S.links2[i].app=/^y/i.test(String(r[9]??""))})}})(DFL.links);
+DFK.links=()=>JSON.stringify(S.links2||[]);
+function v30Boot(){}
+
 /* ---------------- BOOT ---------------- */
 document.addEventListener("DOMContentLoaded",async()=>{
   SRC="<!DOCTYPE html>\n"+document.documentElement.outerHTML;secInit();   // pristine copy for "Download HTML + data"
@@ -9372,7 +9408,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   try{fileH=await idb("readonly",st=>st.get("file"))||null}catch(e){fileH=null}
   if(fileH){try{fileNeed=(await fileH.queryPermission({mode:"readwrite"}))!=="granted"}catch(e){fileNeed=true}}
   try{if(sessionStorage.getItem("nge_edit")&&S.settings.pin){EDIT=true;document.body.classList.add("edit");$("editBtn").textContent="✏️ EDIT MODE : ON";$("editBtn").className="pill gold"}}catch(e){}
-  saveStateUI();addEventListener("hashchange",route);v6Top();route();jInit();xpUI();LVREADY=true;pcGate();boot();wake();lokAuto();xlCheck();v8Boot();dfBoot();v22Boot();v23Boot();v24Boot();v25Boot();v26Boot();v27Boot();v28Boot();v29Boot();
+  saveStateUI();addEventListener("hashchange",route);v6Top();route();jInit();xpUI();LVREADY=true;pcGate();boot();wake();lokAuto();xlCheck();v8Boot();dfBoot();v22Boot();v23Boot();v24Boot();v25Boot();v26Boot();v27Boot();v28Boot();v29Boot();v30Boot();
   
 });
 </script>
