@@ -2126,6 +2126,17 @@ body.u-user .je3,body.u-user .lrnb,body.u-user .j3qi .lcb,body.u-user .j3r .b22,
 .igbox.hx b{font-size:15px;color:#fff}.igbox.hx span{font-size:11.5px;color:#fff}
 .igorb{animation:igorb 30s linear infinite}@keyframes igorb{to{stroke-dashoffset:-400}}
 
+/* detail popup + other dark popups stay readable in light themes */
+body.t22 :is(#emodal,#fed,.jv,#cine){--txt:#eaf2ff;--mut:#a9bbdc;--inp:rgba(0,0,0,.35);--line:rgba(140,180,255,.3);--btn1:#1b2856;--btn2:#0c1431;--bline:rgba(255,255,255,.12);--sh2:rgba(255,255,255,.05);color:#eaf2ff}
+body.t22 #emodal .hfdg b,body.t22 #emodal .hfdx p,body.t22 #emodal h2,body.t22 #emodal .hfba,body.t22 #emodal label,body.t22 #emodal .hfteam small{color:#eaf2ff!important}
+body.t22 #emodal .hfdg span,body.t22 #emodal .hfdx span{color:#9fd0ff!important}
+body.t22 #emodal .note{color:#b9c8e6!important}
+body.t22 #emodal .inp{color:#fff!important;background:rgba(0,0,0,.35)!important}
+body.t22 #emodal .lnk{color:#7fe9ff!important}
+
+body.t22 #emodal .hfdg b{font-weight:700!important;color:#ffffff!important;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+body.t22 #emodal .hfdx p{color:#f2f7ff!important;font-weight:500}
+
 </style>
 </head>
 <body>
@@ -9077,13 +9088,14 @@ DFL.tracker=(function(prev){return function(wb){try{lblFixOnce();const k=Object.
     if(k&&wb[k]&&wb[k][0]){const H=wb[k][0].map(h=>String(h??"").trim().toLowerCase()),dl=(XC.find(c=>c[0]=="dev")||[])[1],di=H.indexOf(String(dl||"").toLowerCase());if(di>=0){const r=wb[k].slice(1).map(r=>r&&r[di]).find(v=>typeof v=="string"&&/^\s*[\d.]+\s*[a-z]+\s*$/i.test(v));S.settings.devSfx=r?" "+r.replace(/^[\s\d.]+/,"").trim():""}}
     if(window.XLDF)S.settings.xlDateFmt=XLDF}catch(e){}const r=prev(wb);try{annualApply()}catch(e){}return r}})(DFL.tracker);
 /* write back: your column order first, your date format */
-DFB.tracker=()=>{const C0=xlCols(),O=S.settings.xlOrder||[],C=[];O.forEach(h=>{const c=C0.find(c=>c[1].toLowerCase()==String(h).toLowerCase()&&!C.includes(c));if(c)C.push(c)});C0.forEach(c=>{if(!C.includes(c))C.push(c)});
+function trSheets(){const C0=xlCols(),O=S.settings.xlOrder||[],C=[];O.forEach(h=>{const c=C0.find(c=>c[1].toLowerCase()==String(h).toLowerCase()&&!C.includes(c));if(c)C.push(c)});C0.forEach(c=>{if(!C.includes(c))C.push(c)});
   const num=new Set(["uid","users","dev","savedHrs"]),fmt=S.settings.xlDateFmt,dk=new Set(["start","end"]);
-  return pureBuild([{name:"Tools",rows:[C.map(c=>c[1])].concat(S.tools.map(t=>C.map(c=>{let v=t[c[0]];if(dk.has(c[0])&&fmt&&/^\d{4}-\d{2}-\d{2}$/.test(v||""))v=xlFmtDate(isoSerial(v),fmt);if(c[0]=="dev"&&S.settings.devSfx&&v!==""&&v!=null)return String(v)+S.settings.devSfx;return num.has(c[0])&&v!==""&&v!=null&&!isNaN(+v)?+v:(v??"")}))),w:C.map(c=>c[0]=="name"||c[0]=="category"?40:c[0]=="desc"||c[0]=="problem"||c[0]=="att"?60:16)},
+  return([{name:"Tools",rows:[C.map(c=>c[1])].concat(S.tools.map(t=>C.map(c=>{let v=t[c[0]];if(dk.has(c[0])&&fmt&&/^\d{4}-\d{2}-\d{2}$/.test(v||""))v=xlFmtDate(isoSerial(v),fmt);if(c[0]=="dev"&&S.settings.devSfx&&v!==""&&v!=null)return String(v)+S.settings.devSfx;return num.has(c[0])&&v!==""&&v!=null&&!isNaN(+v)?+v:(v??"")}))),w:C.map(c=>c[0]=="name"||c[0]=="category"?40:c[0]=="desc"||c[0]=="problem"||c[0]=="att"?60:16)},
    {name:"Locations",rows:[["Code","Name","Color","Active (YES/NO)"]].concat(S.locs.map(l=>[l.code,l.name,l.color,l.active?"YES":"NO"])),w:[12,24,12,16]},
    {name:"Statuses",rows:[["Status","Color","Show (YES/NO)"]].concat(S.statuses.map(s=>[s.name,s.color,s.show?"YES":"NO"])),w:[20,12,14]},
    {name:"Custom Fields",rows:[["Key","Label"]].concat((S.fields||[]).map(f=>[f.key,f.label])),w:[24,40]},
-   rdme("TRACKER — PROJECTS",["Har row = ek project. UID khaali = naya project. Row delete = project delete.","Aapki headings aur column order waise hi rehte hain; naye app columns aakhir mein.","Annual Minutes Saved as per Target bharo — HTML khud hours bana dega.","Save karke HTML automatic le lega."])])};
+   rdme("TRACKER — PROJECTS",["Har row = ek project. UID khaali = naya project. Row delete = project delete.","Aapki headings aur column order waise hi rehte hain; naye app columns aakhir mein.","Annual Minutes Saved as per Target bharo — HTML khud hours bana dega.","Save karke HTML automatic le lega."])])}
+DFB.tracker=()=>pureBuild(trSheets());
 
 /* ================= LINKS: 2nd link (GitHub) + options on click ================= */
 lkEdit=(function(prev){return function(id){prev(id);setTimeout(()=>{const u=$("lkU");if(!u||$("lkG"))return;const l=(S.links2||[]).find(x=>x.id==id)||{};
@@ -9192,6 +9204,72 @@ const jAdm=fn=>function(){if(U22&&!U22.admin){toast("🔒 "+LG("Only admin ("+(S
 jLearn=jAdm(jLearn);j3Fix=jAdm(j3Fix);j3Edit=jAdm(j3Edit);j3Save=jAdm(j3Save);lrnSave=jAdm(lrnSave);j3FixSave=jAdm(j3FixSave);lrnDraw=jAdm(lrnDraw);
 const _v26b=v26Boot;v26Boot=function(){try{adminDefaults();userChip()}catch(e){}_v26b()};
 
+/* ================================================================
+   v27 — Tracker + Employees in ONE Excel (Tracker_Projects.xlsx)
+   • readable detail popup in light themes • link 2 / any link opens in a tab
+================================================================ */
+/* ---------- one Excel: Tools + Employees sheets together ---------- */
+const EMPSH={Employees:"Employees",Access:"Employee Access","Employee Fields":"Employee Fields","READ ME":"Employee READ ME"};
+const _dfbT27=DFB.tracker,_dfbE27=DFB.emps,_dflT27=DFL.tracker,_dflE27=DFL.emps;
+/* build both sheet lists without zip round-trip: rebuild from data */
+function empSheets(){const F=empF();return[{name:"Employees",rows:[["ID"].concat(F.map(f=>f[1])).concat(["Photo file"])].concat(S.emps.map(e=>[e.id].concat(F.map(f=>eVal(e,f[0]))).concat([e.photo?"Photos/"+e.id+".jpg":""]))),w:[12].concat(F.map(f=>f[0]=="mail"?34:f[0]=="name"?26:16)).concat([22])},
+  {name:"Employee Access",rows:[["ID","Name"].concat(S.accSys)].concat(S.emps.map(e=>[e.id,e.name].concat(S.accSys.map(y=>(e.access||{})[y]?"YES":"")))),w:[12,26].concat(S.accSys.map(()=>12))},
+  {name:"Employee Fields",rows:[["Key","Label"]].concat((S.empCols||[]).map(c=>[c.k,c.l])),w:[24,40]},
+  rdme("EMPLOYEE DETAILS",["Ek employee = ek row. ID mat badlo (khaali ID = naya employee).","Employee Access: YES = access hai. Naya system = naya column.","Naam badla to Tracker ke Leader / Attendees mein bhi badlega (HTML se badalne par)."])].map(x=>x.name=="READ ME"?Object.assign(x,{name:"Employee READ ME"}):x)}
+DFB.tracker=()=>pureBuild(empSheets().concat(trSheets()).map(x=>x.name=="READ ME"&&x.rows&&String(x.rows[0][0]).startsWith("TRACKER")?Object.assign(x,{name:"READ ME"}):x));
+DFK.tracker=(function(prev){return()=>prev()+DFK.emps()})(DFK.tracker);
+DFL.tracker=wb=>{_dflT27(wb);const E={};if(wb.Employees)E.Employees=wb.Employees;if(wb["Employee Access"])E.Access=wb["Employee Access"];if(wb["Employee Fields"])E["Employee Fields"]=wb["Employee Fields"];if(E.Employees)_dflE27(E)};
+/* Employee_Details.xlsx no longer separate (old file read once if Tracker has no Employees sheet) */
+{const i=DF_ORDER.indexOf("emps");if(i>=0)DF_ORDER.splice(i,1)}
+dfLoadAll=(function(prev){return async function(){const r=await prev.apply(this,arguments);try{if(DF.dir){const fh=await dfFile(DFF.tracker,false);if(fh){const wb=await xlsxRead(await (await fh.getFile()).arrayBuffer());
+  if(!wb.Employees){const ef=await dfFile(DFF.emps,false);if(ef){_dflE27(await xlsxRead(await (await ef.getFile()).arrayBuffer()));DF.lastJ.tracker="";await dfWriteOne("tracker",true);toast("👥 "+LG("Employees moved into Tracker_Projects.xlsx","Employees ab Tracker_Projects.xlsx mein"))}}}}}catch(e){}render();return r}})(dfLoadAll);
+
+/* ---------- links: any link (link 2, project links) can open as a tab ---------- */
+LK.tmp=LK.tmp||{};
+function lkGet(id){if(LK.tmp[id])return LK.tmp[id];const m=String(id).match(/^(.*)~2$/);if(m){const b=(S.links2||[]).find(x=>x.id==m[1]);return b?{id,name:(b.name||"")+" • 🐙",url:b.url2,cat:"GitHub",ic:"🐙"}:null}return(S.links2||[]).find(x=>x.id==id)}
+lkTabsHTML=function(){return LK.tabs.map(id=>{const l=lkGet(id);if(!l)return"";return`<div class="lktab ${LK.act==id?"on":""}" onclick="lkAct('${id}')" title="${esc(lkUrl(l.url))}"><i>${esc(l.ic||lkCat(l.cat)[2])}</i><span>${esc(l.name||lkHost(l.url))}</span><b onclick="event.stopPropagation();lkClose('${id}')">✕</b></div>`}).join("")+(LK.tabs.length?"":`<div class="lktab ghost">${LG("Click a link to open it as a tab","Link pe click karo — tab mein khulega")}</div>`)};
+lkFrame=function(id){const v=$("lkV"),l=lkGet(id);if(!v||!l||v.querySelector(`.lkfr[data-id="${id}"]`))return;
+  v.insertAdjacentHTML("beforeend",/\.(xlsx?|xlsm|csv|docx?|pptx?)$/i.test(l.url)?`<div class="lkfr lkno" data-id="${id}">📗 ${LG("Office files open in their own app","Office file apne app mein khulegi")}<br><br>${b22("↗",LG("Open file","File kholo"),`window.open(lkUrl(${JSON.stringify(l.url).replace(/"/g,"&quot;")}),'_blank')`,"acc")}</div>`
+   :`<iframe class="lkfr" data-id="${id}" src="${esc(lkUrl(l.url))}" referrerpolicy="no-referrer" allow="fullscreen;clipboard-read;clipboard-write"></iframe>`)};
+lkNewWin=function(){const l=lkGet(LK.act);if(l)window.open(lkUrl(l.url),"_blank")};
+lkMenu=(function(prev){return function(ev,id){prev(ev,id);const m=$("lkM"),l=(S.links2||[]).find(x=>x.id==id);if(!m||!l||!l.url2)return;const b=[...m.querySelectorAll("button")].find(x=>/GitHub/.test(x.textContent));
+  if(b)b.insertAdjacentHTML("beforebegin",`<button onclick="$('lkM').remove();lkOpen('${id}~2')"><i>▶</i>${LG("Open GitHub / link 2 here (tab)","GitHub / link 2 yahin tab mein")}</button>`)}})(lkMenu);
+function lkOpenUrl(url,name){const id="t"+Math.abs([...url].reduce((h,c)=>(h*31+c.charCodeAt(0))|0,7)).toString(36);LK.tmp[id]={id,name:name||lkHost(url),url,cat:"Project",ic:"🔗"};lkOpen(id)}
+/* links inside project details: choose tab or browser */
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("#emodal a.lnk, .hfm a.lnk");if(!a||e.ctrlKey||e.metaKey)return;e.preventDefault();e.stopPropagation();let p=$("lkM");if(p)p.remove();
+  const r=a.getBoundingClientRect(),u=a.getAttribute("href"),q=JSON.stringify(u).replace(/"/g,"&quot;"),nm=JSON.stringify(a.textContent.replace("🔗","").trim()).replace(/"/g,"&quot;");
+  document.body.insertAdjacentHTML("beforeend",`<div id="lkM" style="z-index:9700;left:${Math.min(innerWidth-250,r.left)}px;top:${Math.min(innerHeight-160,r.bottom+4)}px" onclick="event.stopPropagation()"><b>🔗 ${esc(a.textContent.replace("🔗","").trim())}</b>
+   <button onclick="$('lkM').remove();$('emodal')&&$('emodal').classList.remove('show');lkOpenUrl(${q},${nm})"><i>▶</i>${LG("Open here (My Links tab)","Yahin kholo (My Links tab)")}</button><button onclick="$('lkM').remove();window.open(${q},'_blank')"><i>↗</i>${LG("Open in browser tab","Browser tab mein")}</button><button onclick="$('lkM').remove();navigator.clipboard.writeText(${q});toast('📋 Link copied')"><i>📋</i>${LG("Copy link","Link copy")}</button></div>`)},true);
+function v27Boot(){if(cur&&cur.s=="emp")render()}
+
+/* ================================================================
+   v28 — Excel is the MASTER: never write before reading, auto backup,
+   Tracker_Projects.xlsx always holds Tools + Employees
+================================================================ */
+DF.loaded=false;
+/* 1) no write until this session has read the folder */
+dfWriteOne=(function(prev){return async function(k,force){if(!DF.loaded&&!force){DF.pending[k]=1;return false}if(!DF.loaded&&force&&DF.hasData){return false}
+  try{await dfBackup(k)}catch(e){}return prev(k,force)}})(dfWriteOne);
+/* 2) one backup copy per file per session (Backup folder, last 15 kept) */
+DF.bk={};
+async function dfBackup(k){if(DF.bk[k])return;const fh=await dfFile(DFF[k],false);if(!fh){DF.bk[k]=1;return}const f=await fh.getFile();if(!f.size){DF.bk[k]=1;return}
+  const B=await DF.dir.getDirectoryHandle("Backup",{create:true}),d=new Date(),p=n=>String(n).padStart(2,"0"),nm=DFF[k].replace(".xlsx","")+"_"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"_"+p(d.getHours())+p(d.getMinutes())+".xlsx";
+  const w=await (await B.getFileHandle(nm,{create:true})).createWritable();await w.write(await f.arrayBuffer());await w.close();DF.bk[k]=1;
+  const L=[];for await(const [n] of B.entries())if(n.startsWith(DFF[k].replace(".xlsx","")+"_"))L.push(n);L.sort();while(L.length>15){try{await B.removeEntry(L.shift())}catch(e){break}}}
+/* 3) loading: Excel wins; only then writing is allowed */
+dfLoadAll=(function(prev){return async function(){DF.loaded=false;let has=false;try{for await(const [n] of DF.dir.entries())if(Object.values(DFF).includes(n)){has=true;break}}catch(e){}DF.hasData=has;
+  const r=await prev.apply(this,arguments);DF.loaded=true;DF.lastJ={};
+  /* fill only what is missing in the folder (never replace existing data) */
+  try{for(const k of DF_ORDER){const fh=await dfFile(DFF[k],false);if(!fh){await dfWriteOne(k,true)}else{DF.lastJ[k]=DFK[k]()}}
+    const fh=await dfFile(DFF.tracker,false);if(fh){const wb=await xlsxRead(await (await fh.getFile()).arrayBuffer());if(!wb.Employees){await dfWriteOne("tracker",true);toast("👥 "+LG("Employee sheets added to Tracker_Projects.xlsx","Employee sheets Tracker_Projects.xlsx mein jod di"))}}}catch(e){}
+  try{xlLight()}catch(e){}return r}})(dfLoadAll);
+/* linking a folder that already has data → only read (v25 did load+write) */
+dfLink=(function(prev){return async function(){DF.loaded=false;return prev.apply(this,arguments)}})(dfLink);
+dfWriteAll=(function(prev){return async function(force){if(!DF.loaded&&!(force&&!DF.hasData))return;return prev.apply(this,arguments)}})(dfWriteAll);
+/* header light shows "reading Excel…" until the first load */
+xlLight=(function(prev){return function(){prev();const b=$("xl23");if(b&&DF.dir&&DF.ok&&!DF.loaded){b.className="xl23 busy";b.innerHTML=`<i></i><span>📁 ${esc(DF.dir.name)} • ${LG("reading Excel…","Excel padh raha…")}</span>`;b.dataset.s=""}}})(xlLight);
+function v28Boot(){}
+
 /* ---------------- BOOT ---------------- */
 document.addEventListener("DOMContentLoaded",async()=>{
   SRC="<!DOCTYPE html>\n"+document.documentElement.outerHTML;secInit();   // pristine copy for "Download HTML + data"
@@ -9206,7 +9284,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   try{fileH=await idb("readonly",st=>st.get("file"))||null}catch(e){fileH=null}
   if(fileH){try{fileNeed=(await fileH.queryPermission({mode:"readwrite"}))!=="granted"}catch(e){fileNeed=true}}
   try{if(sessionStorage.getItem("nge_edit")&&S.settings.pin){EDIT=true;document.body.classList.add("edit");$("editBtn").textContent="✏️ EDIT MODE : ON";$("editBtn").className="pill gold"}}catch(e){}
-  saveStateUI();addEventListener("hashchange",route);v6Top();route();jInit();xpUI();LVREADY=true;pcGate();boot();wake();lokAuto();xlCheck();v8Boot();dfBoot();v22Boot();v23Boot();v24Boot();v25Boot();v26Boot();
+  saveStateUI();addEventListener("hashchange",route);v6Top();route();jInit();xpUI();LVREADY=true;pcGate();boot();wake();lokAuto();xlCheck();v8Boot();dfBoot();v22Boot();v23Boot();v24Boot();v25Boot();v26Boot();v27Boot();v28Boot();
   
 });
 </script>
